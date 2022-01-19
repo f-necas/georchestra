@@ -1,0 +1,12 @@
+# https://byte27.com/2020/02/03/using-http-2-in-your-spring-boot-application/
+server:
+  http2.enabled: true
+  port: 8443
+  # The format used for the keystore. It could be set to JKS in case it is a JKS file
+  ssl.key-store-type: PKCS12
+  # The path to the keystore containing the certificate
+  ssl.key-store: classpath:localhost.p12
+  # The password used to generate the certificate
+  ssl.key-store-password: georchestra
+  # The alias mapped to the certificate
+  ssl.key-alias: localhost
