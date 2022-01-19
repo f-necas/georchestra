@@ -1,3 +1,5 @@
 # from https://github.com/spring-guides/gs-messaging-stomp-websocket/tree/main/complete
 server:
-  port: 8080
+  port: 8111
+  servlet:
+    context-path: /ws

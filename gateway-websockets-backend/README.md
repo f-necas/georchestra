@@ -21,7 +21,7 @@ Locally:
 mvn spring-boot:run
 ```
 
-Now that the service is running, point your browser at http://localhost:8080 and click the Connect button.
+Now that the service is running, point your browser at http://localhost:8111/ws and click the Connect button.
 
 Upon opening a connection, you are asked for your name. Enter your name and click Send.
 Your name is sent to the server as a JSON message over STOMP. After a one-second simulated

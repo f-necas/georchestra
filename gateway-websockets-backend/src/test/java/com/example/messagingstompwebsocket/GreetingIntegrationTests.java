@@ -88,7 +88,7 @@ public class GreetingIntegrationTests {
 			}
 		};
 
-		this.stompClient.connect("ws://localhost:{port}/websocket-demo", this.headers, handler, this.port);
+		this.stompClient.connect("ws://localhost:{port}/ws/websocket-demo", this.headers, handler, this.port);
 
 		if (latch.await(3, TimeUnit.SECONDS)) {
 			if (failure.get() != null) {
