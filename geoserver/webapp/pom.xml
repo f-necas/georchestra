@@ -496,6 +496,16 @@
       </dependencies>
     </profile>
     <profile>
+      <id>geopkg-output</id>
+      <dependencies>
+        <dependency>
+          <groupId>org.geoserver.extension</groupId>
+          <artifactId>gs-geopkg-output</artifactId>
+          <version>${gs.version}</version>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
       <id>python</id>
       <dependencies>
         <dependency>
