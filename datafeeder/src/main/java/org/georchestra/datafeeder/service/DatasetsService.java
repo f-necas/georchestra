@@ -52,6 +52,7 @@ import org.geotools.data.Query;
 import org.geotools.data.Transaction;
 import org.geotools.data.crs.ForceCoordinateSystemFeatureReader;
 import org.geotools.data.shapefile.ShapefileDataStoreFactory;
+import org.geotools.data.csv.CSVDataStoreFactory;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.data.simple.SimpleFeatureReader;
@@ -417,6 +418,19 @@ public class DatasetsService {
             if (codePage != null) {
                 params.put(ShapefileDataStoreFactory.DBFCHARSET.key, codePage);
             }
+        } else if (isCsv(path)) {
+            URL url;
+            try {
+                // white space handling. We don't want "file name.shp" to be "file%20name.shp",
+                // or the "native type name" will also be "file%20name"
+                Path parent = path.getParent();
+                Path fileName = path.getFileName();
+                url = new URL(String.format("file://%s/%s", parent.toAbsolutePath(), fileName.toString()));
+            } catch (MalformedURLException e) {
+                throw new RuntimeException(e);
+            }
+            params.put(CSVDataStoreFactory.STRATEGYP.key, "AttributesOnly");
+            params.put(CSVDataStoreFactory.URL_PARAM.key, url.toString());
         }
         return params;
     }
@@ -443,6 +457,10 @@ public class DatasetsService {
 
     private boolean isShapefile(@NonNull Path path) {
         return path.getFileName().toString().toLowerCase().endsWith(".shp");
+    }
+
+    private boolean isCsv(@NonNull Path path) {
+        return path.getFileName().toString().toLowerCase().endsWith(".csv");
     }
 
     private DataSourceType resolveDataSourceType(@NonNull Path path, Map<String, String> parameters) {
