@@ -25,6 +25,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Collections;
@@ -206,6 +207,36 @@ public class UploadAnalysisJobConfigurationTest {
             assertNotNull(dset.getFileName());
             assertNotNull(dset.getName());
         }
+    }
+
+    @Test
+    public void dataUploadAnalysisService_analyzeCsvTest() throws URISyntaxException {
+        String testCsvPath = Paths.get(this.getClass().getResource("basic.csv").toURI()).toString();
+
+        Map params = uploadService.getAnalysisService().analyzeCsv(testCsvPath);
+
+        assertTrue("params does not contain expected key 'columnTypes'", params.containsKey("columnTypes"));
+    }
+
+    @Test
+    public void dataUploadAnalysisService_analyzeCsvNoHeaderTest() throws URISyntaxException {
+        String testCsvPath = Paths.get(this.getClass().getResource("covoit-mel-noheader.csv").toURI()).toString();
+
+        Map params = uploadService.getAnalysisService().analyzeCsv(testCsvPath);
+
+        assertTrue("params does not contain expected key 'columnTypes'", params.containsKey("columnTypes"));
+    }
+
+    @Test
+    public void dataUploadAnalysisService_analyzeCsvAsB64Test() throws URISyntaxException {
+        String testCsvPath = Paths.get(this.getClass().getResource("covoit-mel.csv").toURI()).toString();
+
+        Map<String, String> params = uploadService.getAnalysisService().analyzeCsv(testCsvPath);
+
+        assertTrue("params does not contain expected key 'columnTypes'", params.containsKey("columnTypes"));
+        assertTrue("params does not contain expected key 'quoteChar'", params.containsKey("quoteChar"));
+        assertTrue("base-64 encoded csv does not correspond to the expected value",
+                params.get("csv").startsWith("ImlkX2xpZXUiLCJpZF9sb2NhbCI"));
     }
 
     private JobExecution readUploadPack(UUID uploadId) {

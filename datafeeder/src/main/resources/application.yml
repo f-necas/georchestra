@@ -169,3 +169,7 @@ datafeeder:
 
 feign.client.config.default.loggerLevel: basic # one of none|basic|headers|full. Only activated if 'logging.level.feign: DEBUG'
 logging.level.org.springframework.web.servlet.mvc.support.DefaultHandlerExceptionResolver: error
+debug: true
+logging:
+  level:
+    org.georchestra.datafeeder: debug

@@ -18,30 +18,21 @@
  */
 package org.georchestra.datafeeder.batch.service;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
-import org.georchestra.datafeeder.model.DataUploadJob;
-import org.georchestra.datafeeder.model.DatasetUploadState;
-import org.georchestra.datafeeder.model.JobStatus;
-import org.georchestra.datafeeder.model.SampleProperty;
-import org.georchestra.datafeeder.model.UserInfo;
+import com.google.common.annotations.VisibleForTesting;
+import com.opencsv.CSVReader;
+import com.univocity.parsers.csv.CsvFormat;
+import com.univocity.parsers.csv.CsvParser;
+import com.univocity.parsers.csv.CsvParserSettings;
+import org.georchestra.datafeeder.model.*;
 import org.georchestra.datafeeder.repository.DataUploadJobRepository;
 import org.georchestra.datafeeder.repository.DatasetUploadStateRepository;
-import org.georchestra.datafeeder.service.DatasetMetadata;
-import org.georchestra.datafeeder.service.DatasetsService;
-import org.georchestra.datafeeder.service.FileStorageService;
-import org.georchestra.datafeeder.service.UploadPackage;
+import org.georchestra.datafeeder.service.*;
 import org.geotools.util.Converters;
 import org.locationtech.jts.geom.Geometry;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -158,6 +149,8 @@ public class DataUploadAnalysisService {
         final String typeName = item.getName();
         try {
             DatasetMetadata datasetMetadata = datasetsService.describe(path, typeName);
+            Map options = options(item);
+            item.setOptions(options);
             item.setAnalyzeStatus(JobStatus.DONE);
             item.setEncoding(datasetMetadata.getEncoding());
             item.setFeatureCount(datasetMetadata.getFeatureCount());
@@ -173,6 +166,61 @@ public class DataUploadAnalysisService {
             item.setError(e.getMessage());
         }
         return item;
+    }
+
+    private Map<String, String> options(DatasetUploadState item) {
+        if (item.getFormat() == DataSourceMetadata.DataSourceType.CSV) {
+            return analyzeCsv(item.getAbsolutePath());
+        }
+        return Map.of();
+    }
+
+    @VisibleForTesting
+    public Map<String, String> analyzeCsv(String path) {
+        Map<String, String> options = new HashMap<String, String>();
+        CsvFormat format;
+        CsvParser parser;
+        try {
+            CsvParserSettings settings = new CsvParserSettings();
+            settings.detectFormatAutomatically();
+            parser = new CsvParser(settings);
+            List<String[]> parsedCsv = parser.parseAll(new File(path));
+            format = parser.getDetectedFormat();
+            List columns = Arrays.asList(parsedCsv.get(0));
+            List columnsTypes = (List) columns.stream().map(m -> {
+                return "STRING";
+            }).collect(Collectors.toList());
+
+            // options.put("delimiter", format.getDelimiterString());
+            // options.put("columns", String.join(",", columns));
+            options.put("quoteChar", String.valueOf(format.getQuote()));
+            options.put("columnTypes", String.join(",", columnsTypes));
+            options.put("csv", csvSixLinesAsBase64(path));
+            return options;
+        } catch (Exception e) {
+            log.error(String.format("an error occurred while trying to load CSV file: {}", path), e);
+        }
+        return Map.of();
+    }
+
+    @VisibleForTesting
+    public String csvSixLinesAsBase64(String path) throws Exception {
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        try (FileInputStream fis = new FileInputStream(path)) {
+            int numLines = 0;
+            while (true) {
+                int b = fis.read();
+                if (b == '\n') {
+                    numLines++;
+                } else if (b == -1) {
+                    break;
+                }
+                os.write(b);
+                if (numLines == 6)
+                    break;
+            }
+        }
+        return Base64.getEncoder().encodeToString(os.toByteArray());
     }
 
     private void checkStatus(DatasetUploadState item, JobStatus expected) {
@@ -254,11 +302,19 @@ public class DataUploadAnalysisService {
             DatasetUploadState dataset = new DatasetUploadState();
             dataset.setName(typeName);
             dataset.setFileName(fileRelativePath);
+            dataset.setFormat(guessFormat(fileRelativePath));
             dataset.setAbsolutePath(path.toAbsolutePath().toString());
             dataset.setAnalyzeStatus(JobStatus.PENDING);
             datasets.add(dataset);
         }
         return datasets;
+    }
+
+    private DataSourceMetadata.DataSourceType guessFormat(String fileRelativePath) {
+        if (DatasetsService.isCsv(Paths.get(fileRelativePath))) {
+            return DataSourceMetadata.DataSourceType.CSV;
+        }
+        return DataSourceMetadata.DataSourceType.SHAPEFILE;
     }
 
     private DatasetUploadState createFailedDataset(String fileRelativePath, Path path, Exception e) {

@@ -365,6 +365,12 @@ components:
         encoding:
           type: string
           description: detected charset
+        options:
+            type: map
+            description: Extra options provided for the dataset
+        format:
+          type: string
+          description: either SHP or CSV
     
     Property:
       type: object
@@ -375,6 +381,7 @@ components:
           type: string
         type:
           type: string
+
 
     CRS:
       type: object

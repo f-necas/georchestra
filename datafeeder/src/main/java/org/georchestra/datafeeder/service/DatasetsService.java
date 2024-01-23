@@ -455,11 +455,11 @@ public class DatasetsService {
         return charset;
     }
 
-    private boolean isShapefile(@NonNull Path path) {
+    public static boolean isShapefile(@NonNull Path path) {
         return path.getFileName().toString().toLowerCase().endsWith(".shp");
     }
 
-    private boolean isCsv(@NonNull Path path) {
+    public static boolean isCsv(@NonNull Path path) {
         return path.getFileName().toString().toLowerCase().endsWith(".csv");
     }
 
