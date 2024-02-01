@@ -483,9 +483,12 @@ public class DatasetsService {
         final PublishSettings publishing = d.getPublishing();
         requireNonNull(publishing);
         requireNonNull(publishing.getImportedName(), "imported type name not provided");
-        requireNonNull(publishing.getSrs(), "Dataset publish settings must provide the dataset's SRS");
+        CoordinateReferenceSystem targetCRS = null;
+        if (d.getFormat() != DataSourceType.CSV) {
+            requireNonNull(publishing.getSrs(), "Dataset publish settings must provide the dataset's SRS");
+            targetCRS = decodeCRS(publishing.getSrs());
+        }
 
-        final CoordinateReferenceSystem targetCRS = decodeCRS(publishing.getSrs());
         final DataStore sourceStore = resolveSourceDataStore(d);
         final DataStore targetStore;
         try {

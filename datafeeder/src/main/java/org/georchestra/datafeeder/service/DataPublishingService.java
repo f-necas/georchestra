@@ -65,9 +65,11 @@ public class DataPublishingService {
             publishing.setPublish(true);
             String requestedPublishedName = dreq.getPublishedName() == null ? nativeName : dreq.getPublishedName();
             publishing.setPublishedName(requestedPublishedName);
-            String srs = resolvePublishSRS(dset.getNativeBounds().getCrs(), dreq.getSrs());
-            publishing.setSrs(srs);
-            publishing.setSrsReproject(dreq.getSrsReproject());
+            if (dset.getFormat() != DataSourceMetadata.DataSourceType.CSV) {
+                String srs = resolvePublishSRS(dset.getNativeBounds().getCrs(), dreq.getSrs());
+                publishing.setSrs(srs);
+                publishing.setSrsReproject(dreq.getSrsReproject());
+            }
             String encoding = dreq.getEncoding();
             if (null == encoding) {
                 encoding = dset.getEncoding();
