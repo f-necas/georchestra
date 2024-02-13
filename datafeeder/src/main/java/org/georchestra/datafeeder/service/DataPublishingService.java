@@ -18,7 +18,10 @@
  */
 package org.georchestra.datafeeder.service;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.georchestra.datafeeder.api.DataPublishingApiController;
 import org.georchestra.datafeeder.api.DatasetMetadata;
@@ -84,6 +87,15 @@ public class DataPublishingService {
             publishing.setKeywords(md.getTags());
             Integer scale = md.getScale() == null ? 25_000 : md.getScale();
             publishing.setScale(scale);
+            Map<String, String> opts = new HashMap<String, String>();
+            Map originalOpts = md.getOptions();
+            if (originalOpts != null) {
+                originalOpts.keySet().stream().forEach(k -> {
+                    String actualVal = originalOpts.get(k).toString();
+                    opts.put(k.toString(), actualVal);
+                });
+                publishing.setOptions(opts);
+            }
         }
         publishingBatchService.save(job);
 

@@ -453,6 +453,9 @@ components:
           type: string
           description: textual description of dataset lineage
           maxLength: 4096
+        options:
+          type: map
+          description: optional, extra options on the file format, mainly used for CSV.
 
     DatasetPublishRequest:
       type: object

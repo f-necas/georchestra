@@ -62,6 +62,7 @@ import org.geotools.feature.SchemaException;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.referencing.CRS;
+import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.geotools.referencing.wkt.Formattable;
 import org.locationtech.jts.geom.Geometry;
 import org.opengis.feature.GeometryAttribute;
@@ -398,7 +399,6 @@ public class DatasetsService {
     }
 
     private @NonNull Map<String, String> resolveConnectionParameters(@NonNull Path path) {
-        // TODO support other file types than shapefile
         Map<String, String> params = new HashMap<>();
         if (isShapefile(path)) {
             URL url;
@@ -487,6 +487,8 @@ public class DatasetsService {
         if (d.getFormat() != DataSourceType.CSV) {
             requireNonNull(publishing.getSrs(), "Dataset publish settings must provide the dataset's SRS");
             targetCRS = decodeCRS(publishing.getSrs());
+        } else {
+            targetCRS = DefaultGeographicCRS.WGS84;
         }
 
         final DataStore sourceStore = resolveSourceDataStore(d);
@@ -658,7 +660,37 @@ public class DatasetsService {
             log.info("Loading source data from {} default fallback character encoding UTF-8", path);
         }
         Charset charset = encoding == null ? null : Charset.forName(encoding);
-        return loadDataStore(path, charset);
+
+        Map params = resolveConnectionParameters(path);
+        if (dataset.getFormat().equals(DataSourceType.SHAPEFILE)) {
+            if (charset != null) {
+                params.put(ShapefileDataStoreFactory.DBFCHARSET.key, charset.name());
+            }
+        } else if (dataset.getFormat().equals(DataSourceType.CSV)) {
+            // https://docs.geotools.org/stable/userguide/library/data/csv.html
+            params.put(CSVDataStoreFactory.STRATEGYP.key, CSVDataStoreFactory.ATTRIBUTES_ONLY_STRATEGY);
+            Map providedParams = dataset.getPublishing().getOptions();
+            if (providedParams != null) {
+                if (providedParams.containsKey("latField") && providedParams.containsKey("lngField")) {
+                    params.put(CSVDataStoreFactory.STRATEGYP.key, CSVDataStoreFactory.SPECIFC_STRATEGY);
+                    params.put(CSVDataStoreFactory.LATFIELDP.key, providedParams.get("latField"));
+                    params.put(CSVDataStoreFactory.LnGFIELDP.key, providedParams.get("lngField"));
+                }
+                String quoteChar = (String) providedParams.get("quoteChar");
+                String sep = (String) providedParams.get("delimiter");
+                if (quoteChar != null) {
+                    params.put(CSVDataStoreFactory.QUOTECHAR.key, quoteChar.charAt(0));
+                }
+                if (sep != null) {
+                    params.put(CSVDataStoreFactory.SEPERATORCHAR.key, sep.charAt(0));
+                }
+            }
+        } else {
+            throw new RuntimeException(
+                    String.format("Format '%s' not managed by the Datafeeder.", dataset.getFormat()));
+        }
+
+        return loadDataStore(params);
     }
 
     private String resolveTypeName(DataStore store, final String sourceNativeName) throws IOException {

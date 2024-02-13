@@ -42,6 +42,7 @@ import org.georchestra.datafeeder.model.DataUploadJob;
 import org.georchestra.datafeeder.model.DatasetUploadState;
 import org.georchestra.datafeeder.model.PublishSettings;
 import org.georchestra.datafeeder.model.UserInfo;
+import org.georchestra.datafeeder.service.DataSourceMetadata;
 import org.georchestra.datafeeder.service.DatasetsService;
 import org.georchestra.datafeeder.service.publish.impl.GeorchestraDataBackendService;
 import org.georchestra.datafeeder.test.MultipartTestSupport;
@@ -105,6 +106,7 @@ public class GeorchestraDataBackendServiceIT {
         job = new DataUploadJob();
         dataset = new DatasetUploadState();
         dataset.setJob(job);
+        dataset.setFormat(DataSourceMetadata.DataSourceType.SHAPEFILE);
         publishing = new PublishSettings();
         dataset.setPublishing(publishing);
     }
