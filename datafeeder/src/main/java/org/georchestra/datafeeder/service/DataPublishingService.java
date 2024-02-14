@@ -90,15 +90,18 @@ public class DataPublishingService {
             publishing.setScale(scale);
 
             Map<String, Object> originalOpts = md.getOptions();
-            Map<String, String> opts = null;
-            if (originalOpts != null) {
-                opts = originalOpts.entrySet().stream()
-                        .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue().toString()));
-            }
-            publishing.setOptions(opts);
+            publishing.setOptions(morphOptions(originalOpts));
         }
         publishingBatchService.save(job);
         publishingBatchService.runJob(uploadId, user);
+    }
+
+    Map<String, String> morphOptions(Map<String, Object> options) {
+        Map<String, String> opts = null;
+        if (options != null) {
+            opts = options.entrySet().stream().collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue().toString()));
+        }
+        return opts;
     }
 
     /**

@@ -398,7 +398,8 @@ public class DatasetsService {
         return ds;
     }
 
-    private @NonNull Map<String, String> resolveConnectionParameters(@NonNull Path path) {
+    @NonNull
+    Map<String, String> resolveConnectionParameters(@NonNull Path path) {
         Map<String, String> params = new HashMap<>();
         URL url;
         try {
@@ -456,6 +457,8 @@ public class DatasetsService {
     private DataSourceType resolveDataSourceType(@NonNull Path path, Map<String, String> parameters) {
         if (isShapefile(path)) {
             return DataSourceType.SHAPEFILE;
+        } else if (isCsv(path)) {
+            return DataSourceType.CSV;
         }
         throw new UnsupportedOperationException("Only shapefiles are supported so far");
     }
@@ -478,6 +481,8 @@ public class DatasetsService {
             requireNonNull(publishing.getSrs(), "Dataset publish settings must provide the dataset's SRS");
             targetCRS = decodeCRS(publishing.getSrs());
         } else {
+            // TODO: might need to be revisited and let
+            // the user provide a custom CRS.
             targetCRS = DefaultGeographicCRS.WGS84;
         }
 
