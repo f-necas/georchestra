@@ -191,8 +191,6 @@ public class DataUploadAnalysisService {
                 return "STRING";
             }).collect(Collectors.toList());
 
-            // options.put("delimiter", format.getDelimiterString());
-            // options.put("columns", String.join(",", columns));
             options.put("quoteChar", String.valueOf(format.getQuote()));
             options.put("columnTypes", String.join(",", columnsTypes));
             options.put("csv", csvSixLinesAsBase64(path));

@@ -20,6 +20,7 @@ package org.georchestra.datafeeder.service;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -87,18 +88,16 @@ public class DataPublishingService {
             publishing.setKeywords(md.getTags());
             Integer scale = md.getScale() == null ? 25_000 : md.getScale();
             publishing.setScale(scale);
-            Map<String, String> opts = new HashMap<String, String>();
-            Map originalOpts = md.getOptions();
+
+            Map<String, Object> originalOpts = md.getOptions();
+            Map<String, String> opts = null;
             if (originalOpts != null) {
-                originalOpts.keySet().stream().forEach(k -> {
-                    String actualVal = originalOpts.get(k).toString();
-                    opts.put(k.toString(), actualVal);
-                });
-                publishing.setOptions(opts);
+                opts = originalOpts.entrySet().stream()
+                        .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue().toString()));
             }
+            publishing.setOptions(opts);
         }
         publishingBatchService.save(job);
-
         publishingBatchService.runJob(uploadId, user);
     }
 

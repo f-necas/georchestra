@@ -345,7 +345,7 @@ public class DatasetsService {
         try {
             srs = CRS.lookupIdentifier(crs, fullScan);
         } catch (FactoryException e) {
-            e.printStackTrace();
+            log.error("Unable to lookup CRS", e);
         }
         String wkt = toSingleLineWKT(crs);
 
@@ -400,17 +400,17 @@ public class DatasetsService {
 
     private @NonNull Map<String, String> resolveConnectionParameters(@NonNull Path path) {
         Map<String, String> params = new HashMap<>();
+        URL url;
+        try {
+            // white space handling. We don't want "file name.shp" to be "file%20name.shp",
+            // or the "native type name" will also be "file%20name"
+            Path parent = path.getParent();
+            Path fileName = path.getFileName();
+            url = new URL(String.format("file://%s/%s", parent.toAbsolutePath(), fileName.toString()));
+        } catch (MalformedURLException e) {
+            throw new RuntimeException(e);
+        }
         if (isShapefile(path)) {
-            URL url;
-            try {
-                // white space handling. We don't want "file name.shp" to be "file%20name.shp",
-                // or the "native type name" will also be "file%20name"
-                Path parent = path.getParent();
-                Path fileName = path.getFileName();
-                url = new URL(String.format("file://%s/%s", parent.toAbsolutePath(), fileName.toString()));
-            } catch (MalformedURLException e) {
-                throw new RuntimeException(e);
-            }
             params.put(ShapefileDataStoreFactory.FILE_TYPE.key, "shapefile");
             params.put(ShapefileDataStoreFactory.URLP.key, url.toString());
             params.put(ShapefileDataStoreFactory.CREATE_SPATIAL_INDEX.key, "false");
@@ -419,16 +419,6 @@ public class DatasetsService {
                 params.put(ShapefileDataStoreFactory.DBFCHARSET.key, codePage);
             }
         } else if (isCsv(path)) {
-            URL url;
-            try {
-                // white space handling. We don't want "file name.shp" to be "file%20name.shp",
-                // or the "native type name" will also be "file%20name"
-                Path parent = path.getParent();
-                Path fileName = path.getFileName();
-                url = new URL(String.format("file://%s/%s", parent.toAbsolutePath(), fileName.toString()));
-            } catch (MalformedURLException e) {
-                throw new RuntimeException(e);
-            }
             params.put(CSVDataStoreFactory.STRATEGYP.key, "AttributesOnly");
             params.put(CSVDataStoreFactory.URL_PARAM.key, url.toString());
         }
